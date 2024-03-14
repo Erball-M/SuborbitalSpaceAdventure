@@ -13,7 +13,7 @@
   --color-secondary-100: 45, 90, 239;
   --color-secondary-200: 27, 32, 51;
   --color-secondary-300: 13, 17, 23;
-  --color-remove: 171, 43, 0;
+  --color-red: 171, 43, 0;
 
   --field-border: 1px solid white;
   --field-border-radius: .3rem;
@@ -58,8 +58,12 @@ body {
   background: rgb(var(--color-secondary-100));
 }
 
+.button:disabled {
+  background: rgb(var(--color-red));
+}
+
 .button_remove:hover {
-  background: rgb(var(--color-remove));
+  background: rgb(var(--color-red));
 }
 
 .switcher {
@@ -92,6 +96,12 @@ body {
   font-size: var(--fz-l);
 }
 
+.ticket-number {
+  text-align: center;
+  margin-top: var(--mt);
+  font-size: var(--fz-l);
+}
+
 .fieldset {
   margin-top: var(--mt);
   gap: var(--gap);
@@ -117,6 +127,11 @@ body {
   flex-direction: column;
 }
 
+.fieldset_ticket {
+  display: flex;
+  flex-direction: column;
+}
+
 .passenger-form {
   display: flex;
   justify-content: center;
@@ -125,6 +140,10 @@ body {
 
 .passenger-form__textField {
   flex: 1 1 auto;
+}
+
+.passenger-applicant {
+  background: rgb(var(--color-secondary-300));
 }
 
 .passenger-form__numberField {

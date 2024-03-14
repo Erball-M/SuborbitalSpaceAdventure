@@ -1,276 +1,226 @@
-const addFormPattern = `<div class="passenger-form">
-  <input type="text" class="textField passenger-form__textField" name="passenger-name"
-    placeholder="Passenger's name">
-  <input type="number" class="numberField passenger-form__numberField" name="passenger-weight" min="50"
-    value="50">
-  <button type="button" class="button button_remove">Remove</button>
-</div>`
+//Consts
+const lbPerKg = 2.20462
+const prices = {
+  baseTicket: 20000,
+  additional: 8000,
+  perKg: 100,
+  perLb: 100 / lbPerKg,
+}
 
+//Nodes
 const form = document.getElementById('form')
+const fieldsetApplicant = form.elements.applicant
+const fieldsetParams = form.elements.params
+const fieldsetPassengers = form.elements.passengers
+const fieldsetSubmit = form.elements.submit
+const fieldsetTickets = form.elements.tickets
 const popup = {
   base: document.getElementById('popup'),
   container: document.getElementById('popup__container'),
   sum: document.getElementById('popup__sum'),
   currency: document.getElementById('popup__currency'),
 }
-const prices = {
-  baseTicket: 20000,
-  additional: 8000,
-  perKg: 100,
-  perLb: 100 / 2.20462,
-}
-const fieldsets = {
-  applicant: document.querySelector('.fieldset_applicant'),
-  params: document.querySelector('.fieldset_params'),
-  passengers: document.querySelector('.fieldset_passengers'),
-  submit: document.querySelector('.fieldset_submit'),
-}
-const applicantFields = {
-  name: document.getElementById('applicant-name'),
-  surname: document.getElementById('applicant-surname'),
-  email: document.getElementById('applicant-email'),
-  citizenship: document.getElementById('citizenship'),
-  motivation: document.getElementById('motivation'),
-}
-const params = {
-  massUnit: document.querySelectorAll('.switcher__radio'),
-  currency: document.getElementById('currency'),
-}
+const massSwitcher = document.getElementById('massSwitcher')
+
+//Buttons
 const addButton = document.getElementById('add')
 const submitButton = document.getElementById('submit')
-const massSwitcher = document.getElementById('mass-switcher')
+const addTicketButton = document.getElementById('addTicket')
 
-//Filling default passenger as Applicant
-function fillApplicantAsPassenger() {
-  const textField = document.getElementById('passenger-applicant')
-  textField.value = `${applicantFields.surname.value} ${applicantFields.name.value}`
+function disableButton() {
+  addButton.disabled = submitButton.disabled = true
 }
-applicantFields.name.addEventListener('input', fillApplicantAsPassenger)
-applicantFields.surname.addEventListener('input', fillApplicantAsPassenger)
+function enableButton() {
+  addButton.disabled = submitButton.disabled = false
+}
 
-// Adding Passengers
+//Utils
+function getSelectedRadio(nodes) {
+  const arr = !Array.isArray(nodes) ? Array.from(nodes) : nodes
+  const selected = arr.find(item => item.checked)
+  return selected.value
+}
+function getApplicantFullname() {
+  const applicantData = getApplicantData()
+  return `${applicantData.name} ${applicantData.surname}`
+}
+
+//Applicant Fields
+function getApplicantData() {
+  const applicantData = {
+    name: fieldsetApplicant.elements.name.value,
+    surname: fieldsetApplicant.elements.surname.value,
+    email: fieldsetApplicant.elements.email.value,
+    citizenship: fieldsetApplicant.elements.citizenship.value,
+    motivation: fieldsetApplicant.elements.motivation.value,
+  }
+  return applicantData
+}
+
+//Params Fields
+function getParamsData() {
+  const paramsData = {
+    massUnit: getSelectedMassUnit(),
+    currency: fieldsetParams.elements.currency.value,
+  }
+  return paramsData
+}
+
+//Passengers Fields
+function getPassengers() {
+  const nodes = fieldsetPassengers.querySelectorAll('.passenger-form')
+  return nodes
+}
+function getPassengersData() {
+  const passengersData = []
+  const forms = getPassengers()
+  for (let passenger of forms) {
+    const data = {
+      name: passenger.querySelector('.passenger-form__textField').value,
+      weight: passenger.querySelector('.passenger-form__numberField').value,
+    }
+    passengersData.push(data)
+  }
+  return passengersData
+}
+function fillApplicantField() {
+  const fullName = getApplicantFullname()
+  const applicantAsPassengerField = document.querySelector('.passenger-form:first-of-type [name=passenger-name]')
+  applicantAsPassengerField.value = fullName
+}
 function addPassenger() {
-  const massUnit = document.querySelector('input[name="mass-unit"]:checked').value
-  const minWeight = massUnit === 'lb' ? '110' : '50'
-  const defaultValue = minWeight
-  const updatedFormPattern = addFormPattern
-    .replace('min="50"', `min="${minWeight}"`)
-    .replace('value="50"', `value="${defaultValue}"`)
-  addButton.insertAdjacentHTML('beforeBegin', updatedFormPattern)
+  const massUnit = getSelectedMassUnit()
+  const defaultValue = massUnit === 'kg' ? 50 : 50 * lbPerKg
+  const defaultKgValue = 50
+  const addPassengerPattern = `
+  <div class="passenger-form">
+  <input type="text" class="textField passenger-form__textField" name="passenger-name"placeholder="Passenger's name">
+  <input type="number" class="numberField passenger-form__numberField" name="passengerWeight" min="50" value="${defaultValue}" data-kg-value="${defaultKgValue}">
+  <button type="button" class="button button_remove">Remove</button>
+  </div>`
+  const lastPassenger = document.querySelector('.passenger-form:last-of-type')
+  lastPassenger.insertAdjacentHTML('afterEnd', addPassengerPattern)
 }
-addButton.addEventListener('click', addPassenger)
-
 function removePassenger(e) {
   const t = e.target.closest('.button_remove')
   if (!t) return
   t.closest('.passenger-form').remove()
 }
-fieldsets.passengers.addEventListener('click', removePassenger)
 
-//Weight works
-function getTotalWeight() {
-  const passengers = document.querySelectorAll('.passenger-form__numberField')
-  const total = Array.from(passengers).reduce((acc, item) => acc += parseInt(item.value), 0)
-  return total
+fieldsetApplicant.elements.name.addEventListener('input', fillApplicantField)
+fieldsetApplicant.elements.surname.addEventListener('input', fillApplicantField)
+addButton.addEventListener('click', addPassenger)
+fieldsetPassengers.addEventListener('click', removePassenger) //делегирование
+
+//Weight
+function getSelectedMassUnit() {
+  const selected = getSelectedRadio(fieldsetParams.querySelectorAll('[name=massUnit]'))
+  return selected
 }
-
-function checkTotalWeight() {
-  const massUnit = document.querySelector('input[name="mass-unit"]:checked').value
-  const total = getTotalWeight()
-
-  if (massUnit === 'kg') {
-    return total <= 300
-  } else {
-    const maxWeightInLB = 300 * 2.20462
-    return total < maxWeightInLB
-  }
-}
-
-function disableButtons() {
-  addButton.disabled = submitButton.disabled = true
-}
-
-function enableButtons() {
-  addButton.disabled = submitButton.disabled = false
-}
-
-addButton.addEventListener('click', () => {
-  if (getTotalWeight() + 50 > 300) {
-    disableButtons()
-  } else {
-    enableButtons()
-  }
-})
-
-addButton.addEventListener('click', () => {
-  if (!checkTotalWeight()) {
-    disableButtons()
-  } else {
-    enableButtons()
-  }
-})
-
-fieldsets.passengers.addEventListener('input', e => {
+function updateKgData(e) {
   const t = e.target.closest('.passenger-form__numberField')
   if (!t) return
-
-  const massUnit = document.querySelector('input[name="mass-unit"]:checked').value
-  const total = getTotalWeight()
-
+  const massUnit = getSelectedMassUnit()
   if (massUnit === 'kg') {
-    if (total > 300) {
-      disableButtons()
-    } else {
-      enableButtons()
-    }
-  } else {
-    const maxWeightInLB = 300 * 2.20462
-    if (total >= maxWeightInLB) {
-      disableButtons()
-    } else {
-      enableButtons()
-    }
+    t.dataset.kgValue = t.value
+  } else if (massUnit === 'lb') {
+    t.dataset.kgValue = parseFloat((t.value / lbPerKg).toFixed(2))
   }
-})
-
-fieldsets.passengers.addEventListener('click', () => {
-  if (getTotalWeight() - 50 < 300) {
-    enableButtons()
-  }
-})
-
-function updateMassAttributes() {
-  const massUnit = document.querySelector('input[name="mass-unit"]:checked').value
-  const passengers = document.querySelectorAll('.passenger-form__numberField')
+}
+function getTotalWeightInKg() {
+  let totalWeight = 0
+  const passengers = getPassengers()
   passengers.forEach(passenger => {
-    if (massUnit === 'lb') {
-      passenger.setAttribute('min', '110')
-      passenger.setAttribute('value', '110')
-    } else {
-      passenger.setAttribute('min', '50')
-      passenger.setAttribute('value', '50')
+    const weightField = passenger.querySelector('.passenger-form__numberField')
+    totalWeight += parseFloat(weightField.dataset.kgValue)
+  })
+  return totalWeight
+}
+function changeMassUnit(e) {
+  const t = e.target.closest('.switcher__radio')
+  if (!t) return
+  const massUnit = t.value
+  const passengers = getPassengers()
+  passengers.forEach(passenger => {
+    const weightField = passenger.querySelector('.passenger-form__numberField')
+    if (massUnit === 'kg') {
+      weightField.value = parseFloat(weightField.dataset.kgValue)
+    } else if (massUnit === 'lb') {
+      weightField.value = parseFloat(weightField.dataset.kgValue) * lbPerKg
     }
   })
 }
 
-params.massUnit.forEach(unit => {
-  unit.addEventListener('change', updateMassAttributes)
-})
-
+fieldsetPassengers.addEventListener('input', updateKgData)//делегирование
+massSwitcher.addEventListener('change', changeMassUnit)//делегирование
 
 //Price
-function getTotalPrice() {
-  const massUnit = document.querySelector('input[name="mass-unit"]:checked').value
-  let res = prices.baseTicket
-  const additionalCount = fieldsets.passengers.querySelectorAll('.passenger-form').length - 1
-  const additionalPrice = additionalCount * prices.additional
-  res += additionalPrice
-  if (massUnit == 'kg') {
-    const applicantWeight = document.querySelector('#passenger-applicant').nextElementSibling.value
-    const additionalWeights = getTotalWeight() - parseInt(applicantWeight) - (50 * additionalCount)
-    res += (additionalWeights * prices.perKg)
-  } else {
-    const applicantWeight = document.querySelector('#passenger-applicant').nextElementSibling.value
-    const additionalWeights = getTotalWeight() - parseInt(applicantWeight) - (110 * additionalCount)
-    res += (additionalWeights * prices.perLb)
-  }
-  return parseFloat(res.toFixed(2))
-}
-async function showTotalPrice() {
-  const exchanged = await exchangeMoney()
-  submitButton.setAttribute('value', `Submit: ${exchanged}${params.currency.value}`)
-  popup.sum.textContent = exchanged
-  popup.currency.textContent = params.currency.value
-}
-showTotalPrice()
 
-addButton.addEventListener('click', showTotalPrice)
-fieldsets.passengers.addEventListener('input', e => {
-  const t = e.target.closest('.passenger-form__numberField')
-  if (!t) return
-  showTotalPrice()
-})
-fieldsets.passengers.addEventListener('click', e => {
-  const t = e.target.closest('.button_remove')
-  if (!t) return
-  showTotalPrice()
-})
-massSwitcher.addEventListener('click', showTotalPrice)
-
-async function exchangeMoney(sum) {
-  try {
-    const currency = params.currency.value
-    const response = await fetch(`https://v6.exchangerate-api.com/v6/ff696cf3d6cf84b4fac89f79/pair/eur/${currency}`)
-    const json = await response.json()
-    if (json.result == 'error') throw new Error(json["error-type"])
-    const ratio = json['conversion_rate']
-    const exchanged = parseFloat((getTotalPrice() * ratio).toFixed(2))
-    return exchanged
-  } catch (e) {
-    console.log(e)
-  }
-}
-params.currency.addEventListener('change', showTotalPrice)
-
-//submit
-function preventSubmit(e) {
-  e.preventDefault()
-}
-
+//Popup
 function showPopup() {
-  document.body.style.overflow = 'hidden'
   popup.base.style.display = 'flex'
 }
 function hidePopup() {
-  document.body.style.overflow = ''
   popup.base.style.display = 'none'
 }
+
 popup.base.addEventListener('click', hidePopup)
 popup.container.addEventListener('click', e => e.stopPropagation())
 
-function getData() {
-  const data = {
-    applicant: {
-      name: document.getElementById('applicant-name').value,
-      surname: document.getElementById('applicant-surname').value,
-      email: document.getElementById('applicant-email').value,
-      citizenship: document.getElementById('citizenship').value,
-      motivation: document.getElementById('motivation').value,
-    },
-    passengers: [],
-  }
-  const passengers = Array.from(fieldsets.passengers.querySelectorAll('.passenger-form')).slice(1)
-  passengers.forEach(passenger => {
-    data.passengers.push({
-      name: passenger.querySelector('.textField').value,
-      weight: passenger.querySelector('.numberField').value,
-    })
-  })
-  return data
+//Tickets
+function getTicketsCount() {
+  const count = document.querySelectorAll('.fieldset_ticket').length
+  return count
 }
-function validateForms(data) {
-  if (!data.applicant.name || !data.applicant.surname || !data.applicant.email || !data.applicant.citizenship || !data.applicant.motivation) {
-    return false
+function addTicket() {
+  const ticketNumber = getTicketsCount() + 1
+  const additionalTicketPattern = `
+  <fieldset class="fieldset fieldset_ticket">
+  <h2 class="ticket-number">Ticket ${ticketNumber}</h2>
+  <fieldset class="fieldset fieldset_applicant" name="applicant">
+  <input type="text" class="textField" name="name" placeholder="Name">
+  <input type="text" class="textField" name="surname" placeholder="Surname">
+  <input type="text" class="textField" name="email" placeholder="Email">
+  </select>
+  <textarea name="motivation" class="textField" rows="15" placeholder="Motivation"></textarea>
+  </fieldset>
+  <fieldset class="fieldset fieldset_passengers" name="passengers">
+  <div class="passenger-form">
+  <input type="text" class="textField passenger-form__textField passenger-applicant" disabled
+  name="passenger-name" placeholder="Applcant's name" id="passenger-applicant">
+  <input type="number" class="numberField passenger-form__numberField" name="passengerWeight" min="50"
+  value="50" data-kg-value="50">
+  </div>
+  <button type="button" class="button" id="add">Add+</button>
+  </fieldset>
+  </fieldset>`
+  fieldsetTickets.insertAdjacentHTML('beforebegin', additionalTicketPattern)
+}
+
+addTicketButton.addEventListener('click', addTicket)
+
+//Validate
+
+//Submit
+function getFullData() {
+  const result = {
+    applicant: getApplicantData(),
+    passengers: getPassengersData(),
+    params: getParamsData(),
+    // price
   }
-  if (data.passengers.length === 0) {
-    return false
-  }
-  for (let passenger of data.passengers) {
-    if (!passenger.name || !passenger.weight) {
-      return false
-    }
-  }
-  return true
+  return result
+}
+function logFullData() {
+  const fullData = getFullData()
+  const json = JSON.stringify(fullData)
+  console.log(json)
 }
 function submitHandler(e) {
   e.preventDefault()
-  const data = getData()
-  if (!validateForms(data)) {
-    alert('Поля должны быть заполнены')
-    return
-  }
-  console.log(data)
+  // VALIDATE
+  logFullData()
   showPopup()
 }
-submitButton.addEventListener('submit', preventSubmit)
+
 submitButton.addEventListener('click', submitHandler)
