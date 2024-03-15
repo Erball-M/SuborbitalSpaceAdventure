@@ -306,6 +306,7 @@ const ticket_1 = document.querySelector('.fieldset_ticket')
 const tickets = { 1: ticketInit(ticket_1) }
 
 addTicketButton.addEventListener('click', addTicket)
+addTicketButton.addEventListener('click', invalidHandler)
 
 //Price
 function getBasePrice() {
