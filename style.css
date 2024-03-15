@@ -148,6 +148,7 @@ body {
 
 .passenger-form__numberField {
   flex: 0 0 auto;
+  text-align: center;
 }
 
 .popup {
