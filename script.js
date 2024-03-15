@@ -6,6 +6,8 @@ const prices = {
   perKg: 100,
   perLb: 100 / lbPerKg,
 }
+const maxPassengersByTicket = 5
+const maxWeightByTicketInKg = 300
 
 //Nodes
 const form = document.getElementById('form')
@@ -70,10 +72,10 @@ function ticketInit(ticketNode) {
   const addButton = ticketNode.querySelector('.button_add')
 
   function disableButton() {
-    addButton.disabled = submitButton.disabled = true
+    addButton.disabled = true
   }
   function enableButton() {
-    addButton.disabled = submitButton.disabled = false
+    addButton.disabled = false
   }
 
   //Applicant Fields
@@ -115,6 +117,11 @@ function ticketInit(ticketNode) {
     applicantAsPassengerField.value = fullName
   }
   function addPassenger() {
+    const isMay = checkWeightIfAdd()
+    if (!isMay) {
+      disableButton()
+      return
+    }
     const massUnit = getSelectedMassUnit()
     const defaultValue = massUnit === 'kg' ? 50 : 50 * lbPerKg
     const defaultKgValue = 50
@@ -126,11 +133,28 @@ function ticketInit(ticketNode) {
       </div>`
     const lastPassenger = ticketNode.querySelector('.passenger-form:last-of-type')
     lastPassenger.insertAdjacentHTML('afterEnd', addPassengerPattern)
+
+    if (!checkPassengerCount()) {
+      disableButton()
+    }
   }
   function removePassenger(e) {
+    const isMay = checkWeightIfAdd()
+    if (isMay) {
+      enableButton()
+    }
+
     const t = e.target.closest('.button_remove')
     if (!t) return
     t.closest('.passenger-form').remove()
+
+    if (checkPassengerCount()) {
+      enableButton()
+    }
+  }
+  function checkPassengerCount() {
+    const result = getPassengers().length < maxPassengersByTicket
+    return result
   }
 
   ticketNode.querySelector('.applicant__name').addEventListener('input', fillApplicantField)
@@ -167,8 +191,37 @@ function ticketInit(ticketNode) {
       }
     })
   }
+  function checkWeight() {
+    const massUnit = getSelectedMassUnit()
+    const totalWeight = getTotalWeightInKg()
+    const weightInKg = massUnit === 'kg' ? totalWeight : (totalWeight * lbPerKg)
+    const isOkay = weightInKg <= maxWeightByTicketInKg
+    return isOkay
+  }
+  function checkWeightHandler(e) {
+    const isMay = checkWeightIfAdd()
+    if (!isMay) {
+      disableButton()
+      return
+    }
+
+    const t = e.target.closest('.passenger-form__numberField')
+    if (!t) return
+    const isOkay = checkWeight()
+    if (isOkay) {
+      enableButton()
+    } else {
+      disableButton()
+    }
+  }
+  function checkWeightIfAdd() {
+    const totalWeight = getTotalWeightInKg()
+    const isOkay = totalWeight + 50 < maxWeightByTicketInKg
+    return isOkay
+  }
 
   fieldsetPassengers.addEventListener('input', updateKgData)//делегирование
+  fieldsetPassengers.addEventListener('input', checkWeightHandler)//делегирование
   massSwitcher.addEventListener('change', changeMassUnit)//делегирование
 
   //Return ticket methods
@@ -180,6 +233,8 @@ function ticketInit(ticketNode) {
     getTotalWeightInKg,
     disableButton,
     enableButton,
+    checkWeight,
+    checkPassengerCount,
   }
   return ticketMethods
 }
@@ -306,7 +361,7 @@ async function exchangePrice() {
 //Popup
 async function showPopup() {
   popup.currency.textContent = currency.value
-  const exchangedPrice = await exchangePrice()
+  const exchangedPrice = 20000//await exchangePrice()
   popup.sum.textContent = exchangedPrice
   popup.base.style.display = 'flex'
 }

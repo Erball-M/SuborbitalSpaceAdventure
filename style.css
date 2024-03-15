@@ -66,6 +66,14 @@ body {
   background: rgb(var(--color-red));
 }
 
+.invalid-field {
+  background: rgb(var(--color-red));
+}
+
+.invalid-field::placeholder {
+  color: rgb(var(--color-primary));
+}
+
 .switcher {
   display: flex;
   align-items: center;
