@@ -19,6 +19,9 @@ const popup = {
   currency: document.getElementById('popup__currency'),
 }
 
+//Select
+const currency = document.getElementById('currency')
+
 //Buttons
 const massSwitcher = document.getElementById('massSwitcher')
 const submitButton = document.getElementById('submit')
@@ -285,10 +288,26 @@ function getTotalPrice() {
   const result = getBasePrice() + getPassengersPrice() + getPassengersAdditionalPrice()
   return result
 }
-getTotalPrice()
+async function exchangePrice() {
+  const totalPriceInEur = getTotalPrice()
+  try {
+    const response = await fetch(`https://v6.exchangerate-api.com/v6/ff696cf3d6cf84b4fac89f79/pair/eur/${currency.value}`)
+    const json = await response.json()
+    if (json.result == 'error') throw new Error(json["error-type"])
+    const ratio = json['conversion_rate']
+    const exchanged = parseFloat((totalPriceInEur * ratio).toFixed(2))
+    return exchanged
+  } catch (err) {
+    console.log(err)
+    return 'Error exhcnaged'
+  }
+}
 
 //Popup
-function showPopup() {
+async function showPopup() {
+  popup.currency.textContent = currency.value
+  const exchangedPrice = await exchangePrice()
+  popup.sum.textContent = exchangedPrice
   popup.base.style.display = 'flex'
 }
 function hidePopup() {
@@ -303,9 +322,9 @@ popup.container.addEventListener('click', e => e.stopPropagation())
 //Submit
 function getFullData() {
   const result = {
-    applicant: getApplicantData(),
-    passengers: getPassengersData(),
-    params: getParamsData(),
+    // applicant: getApplicantData(),
+    // passengers: getPassengersData(),
+    // params: getParamsData(),
     // price
   }
   return result
