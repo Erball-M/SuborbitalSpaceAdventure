@@ -59,6 +59,7 @@ function updateKgData(e) {
   } else if (massUnit === 'lb') {
     t.dataset.kgValue = parseFloat((t.value / lbPerKg).toFixed(2))
   }
+  showFullPrice()
 }
 
 //Tickets
@@ -143,7 +144,6 @@ function ticketInit(ticketNode) {
     if (isMay) {
       enableButton()
     }
-
     const t = e.target.closest('.button_remove')
     if (!t) return
     t.closest('.passenger-form').remove()
@@ -151,6 +151,7 @@ function ticketInit(ticketNode) {
     if (checkPassengerCount()) {
       enableButton()
     }
+    showFullPrice()
   }
   function checkPassengerCount() {
     const result = getPassengers().length < maxPassengersByTicket
@@ -160,6 +161,8 @@ function ticketInit(ticketNode) {
   ticketNode.querySelector('.applicant__name').addEventListener('input', fillApplicantField)
   ticketNode.querySelector('.applicant__surname').addEventListener('input', fillApplicantField)
   addButton.addEventListener('click', addPassenger)
+  addButton.addEventListener('click', invalidHandler)
+  addButton.addEventListener('click', showFullPrice)
   fieldsetPassengers.addEventListener('click', removePassenger) //делегирование
 
   //Weight
@@ -221,6 +224,7 @@ function ticketInit(ticketNode) {
   }
 
   fieldsetPassengers.addEventListener('input', updateKgData)//делегирование
+  // fieldsetPassengers.addEventListener('input', updatePriceByKg)//делегирование
   fieldsetPassengers.addEventListener('input', checkWeightHandler)//делегирование
   massSwitcher.addEventListener('change', changeMassUnit)//делегирование
 
@@ -357,6 +361,21 @@ async function exchangePrice() {
     return 'Error exhcnaged'
   }
 }
+function showCurrency() {
+  const currencyField = document.getElementById('currency-field')
+  currencyField.textContent = currency.value
+}
+async function showPrice() {
+  const priceField = document.getElementById('totalPrice-field')
+  const totalPrice = await exchangePrice()
+  priceField.textContent = totalPrice
+}
+function showFullPrice() {
+  showCurrency()
+  showPrice()
+}
+
+currency.addEventListener('change', showFullPrice)
 
 //Popup
 async function showPopup() {
@@ -429,10 +448,13 @@ function validateFields() {
 
   return true
 }
+function invalidHandler() {
+  form.querySelectorAll('input').forEach(input => {
+    input.addEventListener('focus', focusInvalid)
+  })
+}
 
-form.querySelectorAll('input').forEach(input => {
-  input.addEventListener('focus', focusInvalid)
-})
+invalidHandler()
 
 //Submit
 async function getFullData() {
