@@ -67,11 +67,11 @@ body {
 }
 
 .invalid-field {
-  background: rgb(var(--color-red));
+  background: rgb(var(--color-red)) !important;
 }
 
 .invalid-field::placeholder {
-  color: rgb(var(--color-primary));
+  color: rgb(var(--color-primary)) !important;
 }
 
 .switcher {

@@ -373,9 +373,66 @@ popup.base.addEventListener('click', hidePopup)
 popup.container.addEventListener('click', e => e.stopPropagation())
 
 //Validate
-function validateFields() {
+function invalidFields() {
+  const textFields = form.querySelectorAll('input[type=text]')
+  for (let field of textFields) {
+    if (!field.value.trim().length) {
+      field.classList.add('invalid-field')
+    }
+  }
 
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const emailFields = form.querySelectorAll('input[type=email]')
+  for (let field of emailFields) {
+    const isEmail = emailRegex.test(field.value.trim())
+    if (!isEmail) {
+      field.classList.add('invalid-field')
+    }
+  }
+
+  const numberFields = form.querySelectorAll('input[type=number]')
+  for (let field of numberFields) {
+    const float = parseFloat(field.value.trim())
+    if (isNaN(float)) {
+      field.classList.add('invalid-field')
+    }
+  }
 }
+function focusInvalid(e) {
+  const t = e.target
+  t.classList.remove('invalid-field')
+}
+function validateFields() {
+  const textFields = form.querySelectorAll('input[type=text]')
+  for (let field of textFields) {
+    if (!field.value.trim().length) {
+      return false
+    }
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const emailFields = form.querySelectorAll('input[type=email]')
+  for (let field of emailFields) {
+    const isEmail = emailRegex.test(field.value.trim())
+    if (!isEmail) {
+      return false;
+    }
+  }
+
+  const numberFields = form.querySelectorAll('input[type=number]')
+  for (let field of numberFields) {
+    const float = parseFloat(field.value.trim())
+    if (isNaN(float)) {
+      return false
+    }
+  }
+
+  return true
+}
+
+form.querySelectorAll('input').forEach(input => {
+  input.addEventListener('focus', focusInvalid)
+})
 
 //Submit
 async function getFullData() {
@@ -394,20 +451,23 @@ async function getFullData() {
     }
     result.tickets.push(data)
   }
-  console.log(result)
 
   return result
 }
-function logFullData() {
-  const fullData = getFullData()
+async function logFullData() {
+  const fullData = await getFullData()
   const json = JSON.stringify(fullData)
   console.log(json)
 }
 function submitHandler(e) {
   e.preventDefault()
-  // VALIDATE
-  logFullData()
-  showPopup()
+  const isValid = validateFields()
+  if (isValid) {
+    logFullData()
+    showPopup()
+  } else {
+    invalidFields()
+  }
 }
 
 submitButton.addEventListener('click', submitHandler)
