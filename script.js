@@ -361,7 +361,7 @@ async function exchangePrice() {
 //Popup
 async function showPopup() {
   popup.currency.textContent = currency.value
-  const exchangedPrice = 20000//await exchangePrice()
+  const exchangedPrice = await exchangePrice()
   popup.sum.textContent = exchangedPrice
   popup.base.style.display = 'flex'
 }
@@ -373,15 +373,29 @@ popup.base.addEventListener('click', hidePopup)
 popup.container.addEventListener('click', e => e.stopPropagation())
 
 //Validate
+function validateFields() {
+
+}
 
 //Submit
-function getFullData() {
+async function getFullData() {
   const result = {
-    // applicant: getApplicantData(),
-    // passengers: getPassengersData(),
-    // params: getParamsData(),
-    // price
+    params: getParamsData(),
+    price: 0,
+    tickets: [],
   }
+
+  result.price = await exchangePrice()
+
+  for (let key in tickets) {
+    const data = {
+      applicantData: tickets[key].getApplicantData(),
+      passengersData: tickets[key].getPassengersData(),
+    }
+    result.tickets.push(data)
+  }
+  console.log(result)
+
   return result
 }
 function logFullData() {
